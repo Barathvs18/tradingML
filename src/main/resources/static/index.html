@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPY Stock Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="top-bar">
+            <div class="logo">SPY Stock Simulator</div>
+            
+            <div class="controls">
+                <input type="date" id="simDate" value="2008-01-22">
+                <button id="btn-simulate" class="btn primary">Simulate Day</button>
+            </div>
+
+            <div class="virtual-clock">
+                <span id="clock-date">--/--/----</span>
+                <span id="clock-time">--:--:--</span>
+            </div>
+        </header>
+
+        <!-- Main Chart Area -->
+        <main class="chart-container">
+            <div id="tvchart"></div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
