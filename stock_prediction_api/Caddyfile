@@ -1,0 +1,18 @@
+{$DOMAIN_NAME} {
+    # Reverse proxy /api to the FastAPI backend
+    header Strict-Transport-Security "max-age=31536000"
+    request_body {
+        max_size 4MB
+    }
+    handle /api {
+        redir /api/ 308
+    }
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Serve the frontend for everything else
+    handle {
+        reverse_proxy frontend:8080
+    }
+}

@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #050505;
+  --bg-layer: rgba(255, 255, 255, 0.04);
+  --bg-panel: rgba(255, 255, 255, 0.06);
+  --bg-panel-strong: rgba(255, 255, 255, 0.09);
+  --border-soft: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-soft: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-strong: #f8fafc;
+}
+
+@layer base {
+  body {
+    @apply min-h-screen bg-[#050505] text-slate-200 antialiased;
+    background-image:
+      radial-gradient(
+        circle at top left,
+        rgba(255, 255, 255, 0.08),
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at bottom right,
+        rgba(148, 163, 184, 0.12),
+        transparent 32%
+      ),
+      linear-gradient(180deg, #0c0c0d 0%, #050505 100%);
+  }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 40px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.premium-button {
+  background: #f4f4f5;
+  color: #0a0a0a;
+  box-shadow: 0 18px 28px rgba(255, 255, 255, 0.18);
+}
+
+.premium-button:hover {
+  background: #e4e4e7;
+}
+
+.hero-tilt {
+  transform-style: preserve-3d;
+}
+
+@media (max-width: 640px) {
+  .hero-tilt {
+    transform: perspective(900px) rotateY(-12deg) rotateZ(-14deg);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.research-workspace { font-variant-numeric: tabular-nums; }
+.research-panel { border: 1px solid rgba(255,255,255,.085); border-radius: 18px; background: linear-gradient(135deg,rgba(24,29,44,.8),rgba(14,17,25,.9)); box-shadow: 0 12px 35px rgba(0,0,0,.12); }
+.research-label { color: #8490a8; font-size: 10px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; }
+.research-input { border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: #111622; color: #e2e8f0; padding: 12px 13px; font-size: 13px; outline: none; }
+.research-input:focus-visible { border-color: #a5b4fc; box-shadow: 0 0 0 3px rgba(165,180,252,.1); }
+.research-input:disabled { opacity: .5; }
+.research-button, .research-button-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 10px; padding: 11px 16px; font-size: 13px; font-weight: 500; transition: background .15s, opacity .15s; cursor: pointer; }
+.research-button { background: #b7c3ff; color: #171d36; }
+.research-button:hover { background: #ced7ff; }
+.research-button-secondary { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.035); color: #cbd5e1; }
+.research-button-secondary:hover { background: rgba(255,255,255,.08); }
+.research-button:disabled, .research-button-secondary:disabled { cursor: default; opacity: .45; }
+.research-button:focus-visible, .research-button-secondary:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
+.research-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.research-table th { padding: 15px 20px; color: #8490a8; font-size: 10px; font-weight: 500; text-align: left; }
+.research-table td { padding: 18px 20px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,.055); }
+.research-table tbody tr:hover { background: rgba(255,255,255,.015); }

@@ -1,0 +1,146 @@
+{
+  "evaluated_at": "2026-10-06T09:40:50.115163+00:00",
+  "method": "Saved-model inference on original later-date holdouts; approximately 70/30 chronological split with one boundary sample omitted",
+  "forecast": "Next trading session close-to-close direction",
+  "threshold_pct": 0.5,
+  "stocks": [
+    {
+      "symbol": "INFY",
+      "name": "Infosys",
+      "model_version": "daily-logit-v1-9e788d4aaa44a4fb",
+      "test_start": "2014-12-02",
+      "test_end": "2021-04-29",
+      "last_outcome_date": "2021-04-30",
+      "training_samples": 3698,
+      "test_samples": 1586,
+      "correct_predictions": 599,
+      "baseline_correct": 577,
+      "accuracy": 0.3776796973518285,
+      "baseline_accuracy": 0.36380832282471626,
+      "difference_percentage_points": 1.3871374527112235,
+      "macro_f1": 0.29915570834418737,
+      "confusion_matrix": [
+        [
+          117,
+          23,
+          388
+        ],
+        [
+          69,
+          30,
+          382
+        ],
+        [
+          99,
+          26,
+          452
+        ]
+      ],
+      "classes": [
+        "DOWN",
+        "SIDEWAYS",
+        "UP"
+      ],
+      "baseline_class": "UP",
+      "probabilities_sum_to_one": true,
+      "training_reproduces_saved_parameters": true,
+      "source": "https://www.kaggle.com/datasets/rohanrao/nifty50-stock-market-data"
+    },
+    {
+      "symbol": "RELIANCE",
+      "name": "Reliance Industries",
+      "model_version": "daily-logit-v1-9a5b38e7720e2e03",
+      "test_start": "2014-12-02",
+      "test_end": "2021-04-29",
+      "last_outcome_date": "2021-04-30",
+      "training_samples": 3698,
+      "test_samples": 1586,
+      "correct_predictions": 581,
+      "baseline_correct": 605,
+      "accuracy": 0.36633039092055486,
+      "baseline_accuracy": 0.38146279949558637,
+      "difference_percentage_points": -1.5132408575031508,
+      "macro_f1": 0.29382404201248397,
+      "confusion_matrix": [
+        [
+          133,
+          29,
+          386
+        ],
+        [
+          96,
+          28,
+          309
+        ],
+        [
+          155,
+          30,
+          420
+        ]
+      ],
+      "classes": [
+        "DOWN",
+        "SIDEWAYS",
+        "UP"
+      ],
+      "baseline_class": "UP",
+      "probabilities_sum_to_one": true,
+      "training_reproduces_saved_parameters": true,
+      "source": "https://www.kaggle.com/datasets/rohanrao/nifty50-stock-market-data"
+    },
+    {
+      "symbol": "TCS",
+      "name": "Tata Consultancy Services",
+      "model_version": "daily-logit-v1-02610bcce5f1e9f4",
+      "test_start": "2016-05-04",
+      "test_end": "2021-04-29",
+      "last_outcome_date": "2021-04-30",
+      "training_samples": 2881,
+      "test_samples": 1236,
+      "correct_predictions": 463,
+      "baseline_correct": 445,
+      "accuracy": 0.37459546925566345,
+      "baseline_accuracy": 0.36003236245954695,
+      "difference_percentage_points": 1.4563106796116498,
+      "macro_f1": 0.3085044358217263,
+      "confusion_matrix": [
+        [
+          79,
+          27,
+          284
+        ],
+        [
+          49,
+          40,
+          312
+        ],
+        [
+          72,
+          29,
+          344
+        ]
+      ],
+      "classes": [
+        "DOWN",
+        "SIDEWAYS",
+        "UP"
+      ],
+      "baseline_class": "UP",
+      "probabilities_sum_to_one": true,
+      "training_reproduces_saved_parameters": true,
+      "source": "https://www.kaggle.com/datasets/rohanrao/nifty50-stock-market-data"
+    }
+  ],
+  "combined": {
+    "test_samples": 4408,
+    "correct_predictions": 1643,
+    "accuracy": 0.37273139745916517,
+    "baseline_accuracy": 0.3691016333938294,
+    "difference_percentage_points": 0.3629764065335753
+  },
+  "limitations": [
+    "Re-evaluates the existing holdout; this is not a new independent dataset.",
+    "Dataset ends April 2021 and can contain unadjusted corporate-action price jumps.",
+    "Direction accuracy does not measure profitability, execution costs or live performance."
+  ]
+}

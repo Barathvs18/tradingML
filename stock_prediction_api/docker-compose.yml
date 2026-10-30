@@ -1,0 +1,40 @@
+name: algopredict-dev
+services:
+  api:
+    build: .
+    ports: ["127.0.0.1:8000:8000"]
+    volumes:
+      - .:/app
+    environment:
+      MONGODB_URL: mongodb://mongo:27017
+      MONGODB_DATABASE: algopredict
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-development-only-secret}
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:8000
+    depends_on:
+      mongo: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    command: ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+
+  mongo:
+    image: mongo:8
+    ports: ["127.0.0.1:27017:27017"]
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mongo_data:

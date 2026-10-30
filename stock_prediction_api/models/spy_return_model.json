@@ -1,0 +1,19 @@
+{
+  "model_type": "ridge_linear_next_minute_return",
+  "feature_names": [
+    "prior_return",
+    "range_return",
+    "body_return",
+    "volume_change"
+  ],
+  "intercept": -1.5605190661873254e-06,
+  "coefficients": [
+    -0.009456067657221854,
+    0.004043716356776542,
+    -0.022549837961495293,
+    -4.930248670428002e-06
+  ],
+  "training_rows": 2037023,
+  "target_stddev": 0.0005306347602571777,
+  "signal_threshold": 7.959521403857666e-05
+}

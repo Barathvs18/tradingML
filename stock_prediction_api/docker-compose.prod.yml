@@ -1,0 +1,111 @@
+name: algopredict
+x-api-environment: &api-environment
+  ENVIRONMENT: production
+  MONGODB_URL: mongodb://mongo:27017
+  MONGODB_DATABASE: algopredict
+  REDIS_URL: redis://redis:6379/0
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}
+  CORS_ORIGINS: https://${DOMAIN_NAME:?Set DOMAIN_NAME}
+  TRUSTED_HOSTS: ${DOMAIN_NAME},localhost,127.0.0.1
+  FRONTEND_URL: https://${DOMAIN_NAME}
+  COOKIE_SECURE: "true"
+  ROOT_PATH: /api
+  ANALYSIS_DB_PATH: /app/storage/research.sqlite3
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  GOOGLE_REDIRECT_URI: https://${DOMAIN_NAME}/api/auth/oauth/google/callback
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
+  api:
+    build: .
+    restart: unless-stopped
+    environment: *api-environment
+    # One API process bounds CPU-intensive training and SQLite write concurrency.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*", "--no-access-log", "--limit-concurrency", "100", "--timeout-keep-alive", "5"]
+    volumes:
+      - research_data:/app/storage
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 20s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    stop_grace_period: 30s
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: algopredict
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Redis stores ephemeral caches, rate limits and short-lived OAuth codes.
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *logging
+
+volumes:
+  mongo_data:
+  research_data:
+  caddy_data:
+  caddy_config:

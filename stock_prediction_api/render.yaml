@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: algopredict-api
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.lock
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*" --no-access-log
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: research-data
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: ROOT_PATH
+        value: /api
+      - key: ANALYSIS_DB_PATH
+        value: /var/data/research.sqlite3
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DATABASE
+        value: algopredict
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: algopredict-redis
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: TRUSTED_HOSTS
+        sync: false
+      - key: MODELS_DIR
+        value: ./models
+      - key: DATA_DIR
+        value: ./data
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+
+  - type: redis
+    name: algopredict-redis
+    plan: starter
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+

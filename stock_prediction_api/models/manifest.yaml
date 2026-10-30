@@ -1,0 +1,7 @@
+algorithms:
+  spy_next_return:
+    name: SPY Next-Minute Return Model
+    category: Machine Learning
+    framework: python_script
+    file: spy_return_model.py
+    lookback_minutes: 60

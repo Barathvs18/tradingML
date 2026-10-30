@@ -1,0 +1,7 @@
+# Local verification of the production images, TLS proxy and durable volumes.
+# Use a separate project name and the generated test-only environment file.
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:8088:80"
+      - "127.0.0.1:8443:443"
