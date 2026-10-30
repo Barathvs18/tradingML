@@ -9,8 +9,7 @@ requests and secure refresh cookies stay on the Vercel origin.
 
 1. Push this repository to GitHub.
 2. In Render, create a **Blueprint** from that repository. The blueprint is
-   `stock_prediction_api/render.yaml` (select the repository root that contains
-   the `stock_prediction_api` folder).
+   `render.yaml` at the repository root.
 3. Select the same region for the web service and Key Value. MongoDB Atlas is
    configured with your connection string.
 4. Render asks for the values marked `sync: false`. Leave Google OAuth values
@@ -39,10 +38,10 @@ research SQLite store and automation scheduler are single-instance components.
 ## 2. Configure and deploy the frontend on Vercel
 
 1. Create a Vercel project from the same repository.
-2. Set the **Root Directory** to `stock_prediction_api/frontend`.
+2. Set the **Root Directory** to `frontend`.
 3. Use Vercel's Vite framework preset, with build command `npm run build` and
    output directory `dist`.
-4. In `stock_prediction_api/frontend/vercel.json`, replace
+4. In `frontend/vercel.json`, replace
    `https://YOUR-RENDER-SERVICE.onrender.com` with the Render hostname copied
    above. Commit and push the change.
 5. Deploy. Add the final Vercel production domain to Render's `FRONTEND_URL`,

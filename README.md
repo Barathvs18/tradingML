@@ -1,147 +1,116 @@
-# Stock Price Prediction — 5-Model Stacked Ensemble
+# AlgoPredict / Indian Market Lab
 
-Predicts the **next-day closing price of RELIANCE.NS** using a stacked ensemble of 5 ML models with genetic hyperparameter tuning. Built as an end-to-end placement/interview project.
+React/TypeScript and FastAPI application for historical daily NSE analysis,
+user-created strategy backtests, a paper wallet, indicator comparison, intraday
+analysis, and virtual trading simulation.
 
----
+## Run local research on Windows
 
-## Methodological Note: Why We Switched from Raw Price to % Return
-
-**Run 1 (raw price target)** showed the naive baseline winning — every model simply learned to repeat yesterday's price. This is the classic *random walk* problem: daily closing prices are so strongly autocorrelated that "predict today's price as tomorrow's" is a hard baseline to beat. The signal isn't in the level, it's in the *change*.
-
-**Run 2 (% return target)** isolates that signal:
-
-> `target = (Close_tomorrow − Close_today) / Close_today`
-
-The correct naive baseline becomes predicting **0% return** (no change). Models now have to learn whether the market will move up or down, and by how much — a genuinely harder and more informative task. This is the standard approach used in quantitative finance.
-
----
-
-## Final Results — Jan 2026 Test Set (% Return Target)
-
-### Return Metrics (primary evaluation — what the model actually learns)
-
-| Model | Return MAE | Return RMSE | Beats Naive? |
-|---|---|---|---|
-| **Naive Baseline** | **0.009487** | 0.014026 | — |
-| XGBoost | 0.012445 | 0.015503 | ❌ |
-| LightGBM | 0.011317 | 0.015330 | ❌ |
-| **Random Forest** | **0.009718** | **0.014170** | ✅ close |
-| **LSTM** | **0.009998** | **0.014462** | ✅ close |
-| CNN-1D | 0.012268 | 0.017383 | ❌ |
-| Average Ensemble | 0.010587 | 0.014970 | ❌ |
-| Stacked Ensemble | 0.011932 | 0.015824 | ❌ |
-
-### Price Metrics (reconstructed for interview-friendly reporting)
-*predicted_price = actual_close_today × (1 + predicted_return)*
-
-| Model | Price MAE (INR) | Price RMSE (INR) | Price MAPE (%) |
-|---|---|---|---|
-| **Naive Baseline** | **14.09** | **21.36** | **0.97%** |
-| XGBoost | 18.31 | 23.19 | 1.26% |
-| LightGBM | 16.71 | 23.07 | 1.15% |
-| **Random Forest** | **14.42** | **21.56** | **0.99%** |
-| **LSTM** | **14.81** | **21.95** | **1.02%** |
-| CNN-1D | 18.23 | 26.46 | 1.25% |
-| Average Ensemble | 15.69 | 22.70 | 1.08% |
-| Stacked Ensemble | 17.50 | 23.56 | 1.21% |
-
-> RELIANCE.NS traded at ~INR 1,200–1,450 in Jan 2026, so **~1% MAPE is strong** for daily close prediction.
-
-### Genetic Tuning Results (Optuna NSGA-II, Return MAE objective)
-
-| Model | Val MAE (Return) | Test MAE (Return) | Beats Naive? |
-|---|---|---|---|
-| XGBoost (Tuned) | 0.007224 | 0.009564 | ✅ |
-| LightGBM (Tuned) | 0.007257 | 0.009966 | ❌ |
-| Random Forest (Tuned) | 0.007183 | 0.009778 | ✅ |
-
----
-
-## CNN-1D Investigation
-
-The CNN-1D underperformed in both runs. Three root causes diagnosed and fixed:
-
-| Issue | Diagnosis | Fix Applied |
-|---|---|---|
-| Keras 3 deprecation | `input_shape=` inside `Conv1D()` affects weight init | Replaced with explicit `Input()` layer |
-| Over-aggressive pooling | Two `MaxPooling1D(2)` on 30-step window: 30→6 timesteps — too lossy | Removed second pooling: 30→14 timesteps |
-| Insufficient training | 20 epochs not enough; val_loss rose after epoch 2 (overfitting) | Increased to 30 epochs |
-
-**Remaining finding**: CNN-1D still overfits. Train loss kept falling (0.88→0.18) while val_loss rose after epoch 2 (0.34→0.52). Root cause is the **small dataset** (~1,300 training sequences) and **noisy return target** — CNNs need more data to generalise than LSTMs because they have no built-in temporal memory.
-
-## Meta-Learner Analysis
-
-Meta-learner weights (Linear Regression): `XGB=−0.40  LGB=+0.31  RF=+10.41  LSTM=−1.16  CNN=−0.08`
-
-The extreme RF weight (+10.4) indicates the meta-learner **overfitted** on the 126-row validation set (Jul–Dec 2025). With only 5 predictors and 126 samples, Linear Regression can find spurious combinations that hurt out-of-sample performance. For a production system, Ridge Regression (regularised) would be a better meta-learner choice.
-
----
-
-## Architecture
-
-```
-RELIANCE.NS (yfinance Ticker.history())
-      |
-      v
-[data_prep.py] -> Features: returns, MAs, RSI, MACD, volatility, volume
-      |            Target: (Close_t+1 - Close_t) / Close_t  (% return)
-      v
- reliance_features.csv
-      |
-      +─── [train_xgboost.py]       XGBoost regressor
-      +─── [train_lightgbm.py]      LightGBM regressor
-      +─── [train_random_forest.py] Random Forest regressor
-      +─── [train_lstm.py]          LSTM (Keras, 30-day sequences)
-      +─── [train_cnn.py]           CNN-1D (Keras, 30-day sequences, fixed)
-      |
-      v
-[genetic_tuning.py] -- Optuna NSGAIISampler, return MAE objective
-      |                 Val: Jul-Dec 2025 only
-      v
-[stacking.py] -- Linear Regression meta-learner on val-set returns
-      |           Price reconstruction only at end for reporting
-      v
-results/metrics.csv + results/plots/
-```
-
-## Strict Data Splits — No Data Leakage
-
-| Split | Period | Used For |
-|---|---|---|
-| Train | 2020-03 to 2025-06 | Train all base models |
-| Validation | 2025-07 to 2025-12 | Tune hyperparameters + train meta-learner |
-| **Test** | **2026-01** | **Final evaluation ONLY — never seen during training** |
-
-*All StandardScalers fit on train split only. Jan 2026 is never touched until final reporting.*
-
-## How to Run
+Requires Python 3.11 and Node 22.12 or newer. From this project directory:
 
 ```powershell
-# Option A — from project root
-.\venv\Scripts\python src\data_prep.py
-.\venv\Scripts\python src\train_xgboost.py
-.\venv\Scripts\python src\train_lightgbm.py
-.\venv\Scripts\python src\train_random_forest.py
-.\venv\Scripts\python src\train_lstm.py
-.\venv\Scripts\python src\train_cnn.py
-.\venv\Scripts\python src\genetic_tuning.py
-.\venv\Scripts\python src\stacking.py
-
-# Option B — from src/ directory
-cd src
-..\venv\Scripts\python data_prep.py
-..\venv\Scripts\python train_xgboost.py
-# ... etc.
-
-# Quick prediction scripts (from src/)
-..\venv\Scripts\python get_predictions.py          # Best single model (RF)
-..\venv\Scripts\python get_stacked_predictions.py  # Full stacked ensemble
+.\start-local.ps1
 ```
 
-## Key Engineering Notes
+Open http://127.0.0.1:8000/analyze. This mode uses SQLite, requires no account
+or broker, and serves React from FastAPI on localhost. See
+[INDIAN_ANALYZER.md](INDIAN_ANALYZER.md) for the model, data and daily API.
 
-- **Ticker.history() over yf.download()**: More reliable in yfinance >= 1.x on Windows
-- **Manual RSI**: Wilder's EWM formula, no pandas-ta dependency
-- **NSGA-II sampler**: Evolutionary/genetic multi-objective Optuna search
-- **Return target**: Correct formulation for financial time-series prediction
-- **Scaler fit on train only**: Prevents any leakage of test distribution statistics
+## Run the full app for development
+
+```powershell
+docker compose up -d --build
+docker compose exec -T api python -m scripts.load_candles --dir data
+cd frontend
+npm ci
+npm run dev
+```
+
+Open http://localhost:3000/register and create an account. The frontend proxies
+API requests to localhost:8000. Bundled daily data imports automatically; the
+separate loader populates the intraday dashboard and simulator. To populate the
+dated NIFTY research universe, run `python scripts/download_indian_data.py --allow-incomplete`
+before starting the app. The source currently supports 49 modelable stocks; INFRATEL
+does not have enough history for this model. Data ends April 2021 and does not
+represent today's NIFTY 50 constituents.
+
+## Production
+
+[PRODUCTION.md](PRODUCTION.md) covers MongoDB configuration, persistence,
+health checks and verification. For Vercel/Render, follow
+[DEPLOY_VERCEL_RENDER.md](DEPLOY_VERCEL_RENDER.md).
+
+```bash
+cp .env.production.example .env.production
+# Set your domain, MongoDB URL and random JWT signing key.
+docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build --wait
+```
+
+Production rejects placeholder secrets, insecure cookies and unsafe origins/
+hosts. No default accounts are created. Google sign-in is optional.
+
+## Main components
+
+| Component | Responsibility |
+| --- | --- |
+| `frontend/src` | React UI, charts, analysis/history/performance, virtual wallet |
+| `app/main.py` | Authenticated FastAPI server |
+| `app/local_main.py` | Local research server and static frontend |
+| `app/analysis` | CSV validation, features, logistic regression, SQLite persistence |
+| `app/analysis/strategies.py` | Long-only strategy signals and historical backtest calculations |
+| `/strategies` | Saved SMA, RSI and chained RSI/MACD rules with historical performance metrics |
+| `/portfolio` | Per-user paper cash, holdings, orders, P&L and opt-in leaderboard |
+| `/compare` | Thirteen daily reference signals and a heuristic market-regime estimate |
+| `app/algorithms` | Intraday technical indicators and custom model adapters |
+| MongoDB | Users, refresh sessions, stocks and minute candles |
+| Redis-compatible Key Value | Caches, OAuth codes and atomic request limits |
+| Docker / Caddy / Nginx | Deployment, HTTPS proxy and static frontend |
+
+## Checks
+
+Install `requirements.lock` and `requirements-dev.txt` in an isolated Python
+3.11 environment. Historical research tests run against isolated SQLite. The
+legacy PostgreSQL integration test scaffold is retired after the MongoDB move;
+the authenticated API flow still needs MongoDB-backed integration coverage.
+
+```powershell
+.venv-prod/Scripts/python.exe -m unittest discover -s analysis_tests -v
+cd frontend
+npm run lint
+npm run test:unit
+npm run build
+npm run test:e2e
+```
+
+`npm run test:production` checks the built app through its HTTPS proxy.
+GitHub Actions runs checks and image builds when this directory is the
+repository root. Publishing remains an operator action.
+
+## Prediction behavior
+
+Bundled Reliance, TCS and Infosys history ends April 2021. The same provider offers
+the dated 50-symbol research universe, with 49 stocks currently having enough data
+for this model; INFRATEL is too short. That data also ends April 2021. Daily predictions use
+current/past inputs and estimate the next trading session's direction: UP above
++0.5%, DOWN below -0.5%, SIDEWAYS between them. Holdout results and a majority-
+class baseline remain visible. Application hardening does not certify accuracy.
+
+The Strategies page supports moving-average, RSI and chained RSI/MACD rules, historical
+backtests, win rate, drawdown and Sharpe metrics, plus an opt-in strategy marketplace.
+The Paper portfolio has per-user cash and holdings, simulated market/limit/stop-loss/
+take-profit orders, daily and weekly P&L, an opt-in pseudonymous leaderboard, scheduled
+checks, in-app plus optional Slack/Discord webhook alerts and rate-limited public API keys. Algo comparison presents 13
+daily reference signals. A WebSocket replays cached daily candles; no live feed is wired.
+Historical simulations do not model taxes, slippage or live broker orders.
+
+Legacy future candles are reproducible simulated paths. The virtual wallet
+applies simulated trades to historical replay. The web app has no live-data
+feed or broker execution; older broker scripts outside this app are separate.
+
+The authenticated app now includes an Intraday screen and `POST /app/predict/intraday`
+for 1, 5, 10, 15 or 30-minute indicator signals, using aggregated candles already
+stored in MongoDB. It reports candle time and staleness and does not generate
+synthetic future prices. This is not a live feed: connect a licensed broker/data
+provider and ingest fresh minute candles before treating signals as current. The
+bundled Nifty daily CSV files cannot power intraday predictions.

@@ -1,15 +1,17 @@
-# Virtual environments
-venv/
-env/
 .env
-
-# Python caches
+.venv/
+.venv-prod/
+.env.*
+!.env.example
+!.env.production.example
+backups/
+frontend/playwright-report/
 __pycache__/
-*.py[cod]
-*$py.class
 .pytest_cache/
-
-# Data
-# We keep reliance_features.csv and results since they are small,
-# but ignore large raw data if added later.
-# data/raw/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+frontend/node_modules/
+frontend/dist/
+.test-artifacts/
+frontend/test-results/
